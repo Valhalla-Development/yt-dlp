@@ -46,6 +46,7 @@ fn make_video_format(id: &str, vcodec: &str, height: u32, fps: f64, vbr: f64, qu
             url: Some(format!("https://example.com/{}.mp4", id)),
             ext: Extension::Mp4,
             http_headers: HttpHeaders::browser_defaults("test-agent".to_string()),
+            cookies: None,
             manifest_url: None,
             downloader_options: None,
         },
