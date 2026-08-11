@@ -290,7 +290,16 @@ impl VideoSelection for Video {
             "🧩 Selecting video format with preferences"
         );
 
-        let video_formats: Vec<&Format> = self.formats.iter().filter(|f| f.is_video()).collect();
+        let video_formats: Vec<&Format> = self
+            .formats
+            .iter()
+            .filter(|f| {
+                // Include muxed audio+video (common on TikTok and similar sites),
+                // not only video-only streams.
+                let t = f.format_type();
+                t.is_video() || t.is_audio_and_video()
+            })
+            .collect();
         if video_formats.is_empty() {
             return None;
         }

@@ -303,6 +303,19 @@ impl<'a> DownloadBuilder<'a> {
             .select_video_format(video_quality, video_codec.clone())
             .ok_or_else(|| Self::format_not_available(self.video, FormatType::Video))?;
 
+        // Muxed formats (TikTok, etc.) already contain audio — download as-is.
+        if video_format.format_type().is_audio_and_video() {
+            tracing::debug!(
+                video_format_id = %video_format.format_id,
+                video_ext = ?video_format.download_info.ext,
+                "📥 Selected muxed audio+video format"
+            );
+            return self
+                .downloader
+                .download_format_to_path(video_format, &self.output)
+                .await;
+        }
+
         // Select audio format based on quality and codec preferences
         let audio_format = self
             .video
