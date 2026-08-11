@@ -273,6 +273,70 @@ impl Downloader {
         self.download_format_to_path(format, &output_path).await
     }
 
+    /// Downloads a specific format by asking the yt-dlp binary to fetch it.
+    ///
+    /// Prefer this for CDN-protected muxed formats (e.g. TikTok) where a plain
+    /// HTTP client receives 403 even with the cookies/headers from metadata.
+    pub async fn download_format_with_ytdlp(
+        &self,
+        page_url: &str,
+        format_id: &str,
+        output: impl Into<PathBuf>,
+    ) -> crate::error::Result<PathBuf> {
+        let output_path = output.into();
+        if let Some(parent) = output_path.parent() {
+            tokio::fs::create_dir_all(parent).await?;
+        }
+
+        tracing::debug!(
+            page_url = page_url,
+            format_id = format_id,
+            output = %output_path.display(),
+            "📥 Downloading format via yt-dlp binary"
+        );
+
+        let mut args = vec![
+            "--no-progress".to_string(),
+            "--no-mtime".to_string(),
+            "-f".to_string(),
+            format_id.to_string(),
+            "-o".to_string(),
+            output_path.to_string_lossy().to_string(),
+        ];
+
+        if let Some(user_agent) = self.user_agent.as_ref() {
+            args.push("--user-agent".to_string());
+            args.push(user_agent.clone());
+        }
+
+        // Preserve builder args (cookies file, proxy, etc.) without duplicating
+        // flags we already set above.
+        for arg in &self.args {
+            if arg == "--no-progress" || arg.starts_with("--user-agent") {
+                continue;
+            }
+            args.push(arg.clone());
+        }
+
+        args.push(page_url.to_string());
+
+        let executor =
+            crate::executor::Executor::new(self.libraries.youtube.clone(), args, self.timeout);
+        executor.execute().await?;
+
+        if !output_path.exists() {
+            return Err(crate::error::Error::download_failed(
+                0,
+                format!(
+                    "yt-dlp reported success but output missing: {}",
+                    output_path.display()
+                ),
+            ));
+        }
+
+        Ok(output_path)
+    }
+
     /// Downloads a format to a specific path.
     ///
     /// # Arguments

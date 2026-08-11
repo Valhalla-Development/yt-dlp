@@ -308,8 +308,25 @@ impl<'a> DownloadBuilder<'a> {
             tracing::debug!(
                 video_format_id = %video_format.format_id,
                 video_ext = ?video_format.download_info.ext,
+                has_cookies = video_format.download_info.cookies.is_some(),
                 "📥 Selected muxed audio+video format"
             );
+
+            // Cookie-gated CDNs (TikTok) often reject plain HTTP clients; let
+            // the yt-dlp binary fetch the stream the same way the CLI does.
+            if video_format.download_info.cookies.is_some() {
+                let page_url = self.video.webpage_url.as_deref().ok_or_else(|| {
+                    crate::error::Error::download_failed(
+                        0,
+                        "Missing webpage_url for yt-dlp format download",
+                    )
+                })?;
+                return self
+                    .downloader
+                    .download_format_with_ytdlp(page_url, &video_format.format_id, &self.output)
+                    .await;
+            }
+
             return self
                 .downloader
                 .download_format_to_path(video_format, &self.output)
