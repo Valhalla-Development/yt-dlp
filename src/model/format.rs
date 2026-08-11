@@ -213,6 +213,9 @@ pub struct DownloadInfo {
     pub ext: Extension,
     /// The HTTP headers used by the downloader.
     pub http_headers: HttpHeaders,
+    /// Cookie string provided by yt-dlp for authenticated/CDN requests (e.g. TikTok).
+    #[serde(default)]
+    pub cookies: Option<String>,
     /// The manifest URL, if the format is a manifest.
     pub manifest_url: Option<String>,
     /// The options used by the downloader.
@@ -364,6 +367,12 @@ pub struct HttpHeaders {
     /// The accept encoding used by the downloader.
     #[serde(rename = "Sec-Fetch-Mode", default)]
     pub sec_fetch_mode: String,
+    /// Referer required by some CDNs (notably TikTok).
+    #[serde(default)]
+    pub referer: String,
+    /// Cookie header when provided inside http_headers.
+    #[serde(default)]
+    pub cookie: String,
 }
 
 impl HttpHeaders {
@@ -382,6 +391,8 @@ impl HttpHeaders {
             accept: "*/*".to_string(),
             accept_language: "en-US,en".to_string(),
             sec_fetch_mode: "navigate".to_string(),
+            referer: String::new(),
+            cookie: String::new(),
         }
     }
 
@@ -389,7 +400,7 @@ impl HttpHeaders {
     ///
     /// # Returns
     ///
-    /// A `HeaderMap` with User-Agent, Accept, Accept-Language, and Sec-Fetch-Mode set.
+    /// A `HeaderMap` with the configured request headers set.
     pub fn to_header_map(&self) -> reqwest::header::HeaderMap {
         let mut map = HeaderMap::new();
         if let Ok(hv) = HeaderValue::from_str(&self.user_agent) {
@@ -403,6 +414,16 @@ impl HttpHeaders {
         }
         if let Ok(hv) = HeaderValue::from_bytes(self.sec_fetch_mode.as_bytes()) {
             map.insert("Sec-Fetch-Mode", hv);
+        }
+        if !self.referer.is_empty()
+            && let Ok(hv) = HeaderValue::from_str(&self.referer)
+        {
+            map.insert(header::REFERER, hv);
+        }
+        if !self.cookie.is_empty()
+            && let Ok(hv) = HeaderValue::from_str(&self.cookie)
+        {
+            map.insert(header::COOKIE, hv);
         }
         map
     }

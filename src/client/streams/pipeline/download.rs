@@ -191,12 +191,10 @@ impl Downloader {
                 video_id: video.id.clone(),
             })?;
 
-        let http_headers = self.user_agent.clone().map(|ua| crate::model::format::HttpHeaders {
-            user_agent: ua,
-            accept: "*/*".to_string(),
-            accept_language: "en-US,en".to_string(),
-            sec_fetch_mode: "navigate".to_string(),
-        });
+        let http_headers = self
+            .user_agent
+            .clone()
+            .map(crate::model::format::HttpHeaders::browser_defaults);
 
         let id = self
             .download_manager
@@ -329,8 +327,21 @@ impl Downloader {
             format_id: format.format_id.clone(),
         })?;
 
+        // Prefer format-provided headers (Referer/cookies matter for TikTok CDNs).
+        let mut http_headers = format.download_info.http_headers.clone();
+        if http_headers.cookie.is_empty()
+            && let Some(cookies) = format.download_info.cookies.as_ref()
+        {
+            http_headers.cookie = cookies.clone();
+        }
+        if http_headers.user_agent.is_empty()
+            && let Some(ua) = self.user_agent.as_ref()
+        {
+            http_headers.user_agent = ua.clone();
+        }
+
         // Create an optimized fetcher with parallel downloading, driven by the configured SpeedProfile
-        let fetcher = Fetcher::new(&url, self.proxy.as_ref(), None)?
+        let fetcher = Fetcher::new(&url, self.proxy.as_ref(), Some(http_headers))?
             .with_parallel_segments(self.download_manager.parallel_segments())
             .with_segment_size(self.download_manager.segment_size())
             .with_retry_attempts(self.download_manager.retry_attempts());
