@@ -586,7 +586,12 @@ impl Downloader {
     /// A mutable reference to `self` for method chaining.
     pub fn set_user_agent(&mut self, user_agent: impl AsRef<str>) -> &mut Self {
         tracing::debug!(user_agent = user_agent.as_ref(), "🔧 Setting user agent");
-        self.user_agent = Some(user_agent.as_ref().to_string());
+        let ua = user_agent.as_ref().to_string();
+        let ua_arg = format!("--user-agent={}", ua);
+        self.youtube_extractor.with_arg(ua_arg.clone());
+        self.generic_extractor.with_arg(ua_arg.clone());
+        self.args.push(ua_arg);
+        self.user_agent = Some(ua);
         self
     }
 

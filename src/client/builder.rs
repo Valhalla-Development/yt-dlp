@@ -390,6 +390,16 @@ impl DownloaderBuilder {
             args.push("--netrc".to_string());
         }
 
+        // Propagate User-Agent to extractors too — otherwise metadata fetches
+        // (Generic/TikTok etc.) ignore DownloaderBuilder::with_user_agent and
+        // only media HTTP downloads would use it.
+        if let Some(ref user_agent) = self.user_agent {
+            let ua_arg = format!("--user-agent={}", user_agent);
+            youtube_extractor.with_arg(ua_arg.clone());
+            generic_extractor.with_arg(ua_arg.clone());
+            args.push(ua_arg);
+        }
+
         // Create cache layer if configured
         #[cfg(cache)]
         let cache = if let Some(config) = self.cache_config {
