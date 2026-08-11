@@ -116,13 +116,19 @@ pub struct Video {
     pub categories: Vec<String>,
 
     /// If the video is age restricted, the age limit is different from 0.
+    /// Defaulted: many extractors (notably TikTok) omit this field.
+    #[serde(default)]
+    #[serde_as(deserialize_as = "DefaultOnNull")]
     pub age_limit: i64,
     /// If the video is available in the country.
     #[serde(rename = "_has_drm")]
     pub has_drm: Option<DrmStatus>,
     /// If the video was a live stream.
+    #[serde(default)]
+    #[serde_as(deserialize_as = "DefaultOnNull")]
     pub live_status: String,
     /// If the video is playable in an embed.
+    #[serde(default)]
     pub playable_in_embed: bool,
 
     /// The extractor information.
