@@ -113,8 +113,24 @@ impl Format {
             (true, true) => FormatType::AudioVideo,
             (true, false) => FormatType::Audio,
             (false, true) => FormatType::Video,
+            // Instagram progressive formats often omit codec labels entirely.
+            // Treat unlabeled progressive MP4/MOV URLs as muxed A/V so they stay selectable.
+            _ if self.is_unlabeled_progressive_mp4() => FormatType::AudioVideo,
             _ => FormatType::Unknown,
         }
+    }
+
+    /// Progressive MP4/MOV with a direct URL but no codec metadata (common on Instagram).
+    ///
+    /// These are typically H.264+AAC files that players like QuickTime can open, unlike
+    /// VP9 DASH streams remuxed into `.mp4`.
+    pub fn is_unlabeled_progressive_mp4(&self) -> bool {
+        self.codec_info.video_codec.is_none()
+            && self.codec_info.audio_codec.is_none()
+            && self.download_info.url.is_some()
+            && self.download_info.manifest_url.is_none()
+            && self.storyboard_info.fragments.is_none()
+            && matches!(self.download_info.ext, Extension::Mp4 | Extension::Unknown)
     }
 
     /// Returns the decrypted URL for this format.

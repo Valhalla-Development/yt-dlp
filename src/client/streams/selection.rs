@@ -304,7 +304,9 @@ impl VideoSelection for Video {
             return None;
         }
 
-        // Single-pass codec filter; fall back to all video formats if none match
+        // Single-pass codec filter; fall back to all video formats if none match.
+        // Unlabeled progressive MP4s (Instagram) are treated as AVC1 matches so we
+        // don't ignore them and fall back to labeled VP9 DASH.
         let filtered: Vec<&Format>;
         let active: &[&Format] = if codec == VideoCodecPreference::Any {
             &video_formats
@@ -312,12 +314,7 @@ impl VideoSelection for Video {
             filtered = video_formats
                 .iter()
                 .copied()
-                .filter(|f| {
-                    f.codec_info
-                        .video_codec
-                        .as_ref()
-                        .is_some_and(|c| matches_video_codec(c, &codec))
-                })
+                .filter(|f| format_matches_video_codec_preference(f, &codec))
                 .collect();
             if filtered.is_empty() {
                 tracing::warn!(
@@ -457,6 +454,18 @@ impl VideoSelection for Video {
             ThumbnailQuality::MinimumResolution(width, height) => self.thumbnail_for_size(width, height),
         }
     }
+}
+
+/// Whether a format satisfies a video codec preference.
+///
+/// Unlabeled progressive MP4s are accepted for [`VideoCodecPreference::AVC1`] because
+/// extractors like Instagram omit codec metadata on those H.264 muxed files.
+fn format_matches_video_codec_preference(format: &Format, codec: &VideoCodecPreference) -> bool {
+    if let Some(c) = format.codec_info.video_codec.as_ref() {
+        return matches_video_codec(c, codec);
+    }
+
+    matches!(codec, VideoCodecPreference::AVC1) && format.is_unlabeled_progressive_mp4()
 }
 
 /// Selects the video format with the closest height to the target

@@ -472,6 +472,40 @@ fn select_video_format_codec_fallback() {
 }
 
 #[test]
+fn select_video_format_avc1_prefers_unlabeled_progressive_over_vp9_dash() {
+    // Instagram-shaped: progressive muxed MP4 with no codec labels + labeled VP9 DASH.
+    // AVC1 preference must pick the progressive file, not fall back to VP9.
+    let mut progressive = make_video_format("3", "placeholder", 0, 0.0, 0.0, 0.0);
+    progressive.codec_info.video_codec = None;
+    progressive.codec_info.audio_codec = None;
+    progressive.video_resolution = VideoResolution {
+        width: None,
+        height: None,
+        resolution: None,
+        fps: None,
+        aspect_ratio: None,
+    };
+    progressive.quality_info.quality = None;
+    progressive.rates_info.video_rate = None;
+    progressive.format_note = None;
+    progressive.format = "3 - unknown".to_string();
+
+    let vp9_dash = make_video_format("dash-vp9", "vp09.00.40.08", 1080, 30.0, 415.0, 5.0);
+
+    let video = make_test_video(vec![progressive, vp9_dash]);
+    assert_eq!(
+        video.formats[0].format_type(),
+        yt_dlp::model::format::FormatType::AudioVideo
+    );
+
+    let selected = video
+        .select_video_format(VideoQuality::High, VideoCodecPreference::AVC1)
+        .unwrap();
+    assert_eq!(selected.format_id, "3");
+    assert!(selected.format_type().is_audio_and_video());
+}
+
+#[test]
 fn select_video_format_empty() {
     let video = make_test_video(vec![]);
     assert!(
