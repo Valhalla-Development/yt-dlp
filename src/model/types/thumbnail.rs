@@ -11,6 +11,8 @@ pub struct Thumbnail {
     /// The URL of the thumbnail.
     pub url: String,
     /// The preference index of the thumbnail, e.g. '-35' or '0'.
+    /// Optional in yt-dlp output; Instagram (and others) often omit it.
+    #[serde(default)]
     pub preference: i64,
 
     /// The ID of the thumbnail.

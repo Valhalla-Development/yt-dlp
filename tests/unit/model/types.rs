@@ -381,6 +381,22 @@ fn thumbnail_serde_round_trip() {
 }
 
 #[test]
+fn thumbnail_deserializes_without_preference() {
+    // Instagram (and some other extractors) omit thumbnail preference.
+    let json = r#"{
+        "url": "https://example.com/thumb.jpg",
+        "id": "0",
+        "height": 720,
+        "width": 1280,
+        "resolution": "1280x720"
+    }"#;
+    let thumb: Thumbnail = serde_json::from_str(json).unwrap();
+    assert_eq!(thumb.preference, 0);
+    assert_eq!(thumb.id, "0");
+    assert_eq!(thumb.url, "https://example.com/thumb.jpg");
+}
+
+#[test]
 fn thumbnail_display() {
     let thumb = Thumbnail {
         url: "https://example.com/thumb.jpg".to_string(),
