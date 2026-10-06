@@ -1,74 +1,87 @@
-<h2 align="center">🎬️ A Rust library (with auto dependencies installation) for video downloading</h2>
+# 🎬 Valhalla yt-dlp Rust wrapper
 
-<div align="center">This library is a Rust asynchronous wrapper around the yt-dlp command line tool, a feature-rich audio/video downloader supporting <strong>YouTube, Vimeo, TikTok, Instagram, Twitter, and more.</strong></div>
-<div align="center">
-  The crate is designed to download audio and video from various websites.
-  You don't need to care about dependencies, yt-dlp and ffmpeg will be downloaded automatically.
-</div>
+This is the [Valhalla-Development fork](https://github.com/Valhalla-Development/yt-dlp) of [boul2gom's Rust yt-dlp library](https://github.com/boul2gom/yt-dlp), used by [Snatchr](https://github.com/Valhalla-Development/Snatchr). It wraps the separate [Python yt-dlp downloader](https://github.com/yt-dlp/yt-dlp) and FFmpeg. Python yt-dlp supplies the site extractors; this fork maintains the Rust integration.
 
-<br>
-<div align="center">⚠️ The project is still in development, so if you encounter any bugs or have any feature requests, please open an issue or a discussion.</div>
-<br>
+[![CI](https://img.shields.io/github/actions/workflow/status/Valhalla-Development/yt-dlp/ci.yml?branch=develop&label=CI)](https://github.com/Valhalla-Development/yt-dlp/actions/workflows/ci.yml)
+[Report a broken source](https://github.com/Valhalla-Development/yt-dlp/issues/new) · [Rust upstream](https://github.com/boul2gom/yt-dlp)
 
-<div align="center">
-  <a href="https://github.com/boul2gom/yt-dlp/issues/new/choose">Report a Bug</a>
-  ·
-  <a href="https://github.com/boul2gom/yt-dlp/discussions/new?category=ideas">Request a Feature</a>
-  ·
-  <a href="https://github.com/boul2gom/yt-dlp/discussions/new?category=q-a">Ask a Question</a>
-</div>
+## Differences from the Rust upstream
 
----
+We bring upstream changes into `develop` while retaining fixes needed by Snatchr:
 
-<p align="center">
-  <a href="https://github.com/boul2gom/yt-dlp/actions/workflows/ci-dev.yml">
-    <img src="https://img.shields.io/github/actions/workflow/status/boul2gom/yt-dlp/ci-dev.yml?label=Develop%20CI&logo=Github" alt="Develop CI"/>
-  </a>  
-  <a href="https://crates.io/crates/yt-dlp">
-    <img src="https://img.shields.io/github/v/release/boul2gom/yt-dlp?label=Release&logo=Rust" alt="Release"/>
-  </a>
-  <a href="https://crates.io/crates/yt-dlp">
-    <img src="https://img.shields.io/crates/d/yt-dlp?label=Downloads&logo=Rust" alt="Downloads"/>
-  </a>
-  <a href="https://deepwiki.com/boul2gom/yt-dlp">
-    <img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki">
-  </a>
-</p>
-<p align="center">
-  <a href="https://github.com/boul2gom/yt-dlp/discussions">
-    <img src="https://img.shields.io/github/discussions/boul2gom/yt-dlp?label=Discussions&logo=Github" alt="Discussions">
-  </a>
-  <a href="https://github.com/boul2gom/yt-dlp/issues">
-    <img src="https://img.shields.io/github/issues-raw/boul2gom/yt-dlp?label=Issues&logo=Github" alt="Issues">
-  </a>
-  <a href="https://github.com/boul2gom/yt-dlp/pulls">
-    <img src="https://img.shields.io/github/issues-pr-raw/boul2gom/yt-dlp?label=Pull%20requests&logo=Github" alt="Pull%20requests">
-  </a>
-</p>
-<p align="center">
-  <a href="https://github.com/boul2gom/yt-dlp/blob/develop/LICENSE.md">
-    <img src="https://img.shields.io/github/license/boul2gom/yt-dlp?label=License&logo=Github" alt="License">
-  </a>
-  <a href="https://github.com/boul2gom/yt-dlp/stargazers">
-    <img src="https://img.shields.io/github/stars/boul2gom/yt-dlp?label=Stars&logo=Github" alt="Stars">
-  </a>
-  <a href="https://github.com/boul2gom/yt-dlp/fork">
-    <img src="https://img.shields.io/github/forks/boul2gom/yt-dlp?label=Forks&logo=Github" alt="Forks">
-  </a>
-</p>  
+- Accept optional extractor metadata, fractional media durations, and decimal Unix timestamps.
+- Select progressive MP4 formats without codec labels, as returned by Instagram and Facebook.
+- Keep typed DASH/HLS audio and video formats selectable even when they include manifest URLs.
+- Use yt-dlp for cookie-protected or segmented downloads, with the configured FFmpeg binary for merging.
+- Let the download builder handle muxed video, separate audio/video, silent video, and audio-only sources.
+- Respect the configured output directory for relative builder paths, including single-file downloads.
 
-<p align="center">
-  <img src="https://repobeats.axiom.co/api/embed/81fed25250909bb618c0180c8092c143feae0616.svg" alt="Statistics" title="Repobeats analytics image" />
-</p>
+The upstream crates.io package and docs.rs reference describe the upstream API. Installing `yt-dlp = "2.8.3"` does not install these fork changes. See the Git dependency below.
 
-<p align="center">
-  <a href="https://app.fossa.com/projects/custom%2B60779%2Fgithub.com%2Fboul2gom%2Fyt-dlp?ref=badge_small" alt="FOSSA Status"><img src="https://app.fossa.com/api/projects/custom%2B60779%2Fgithub.com%2Fboul2gom%2Fyt-dlp.svg?type=small"/></a>
-  <a href="https://codecov.io/gh/boul2gom/yt-dlp"><img src="https://img.shields.io/codecov/c/github/boul2gom/yt-dlp?token=M9LN6PRPUU&label=Codecov&logo=codecov" alt="Codecov"></a>
-  <a href="https://sonarcloud.io/summary/overall?id=boul2gom_yt-dlp"><img src="https://img.shields.io/sonar/quality_gate/boul2gom_yt-dlp?server=https%3A%2F%2Fsonarcloud.io&label=Quality&logo=sonarqubecloud" alt="Quality"></a>
-  <a href="https://securityscorecards.dev/viewer/?uri=github.com/boul2gom/yt-dlp"><img src="https://img.shields.io/ossf-scorecard/github.com/boul2gom/yt-dlp?label=Scorecard&logo=securityscorecard" alt="Scorecard"></a>
-</p>
+## Confirmed working sources
 
----
+The opt-in tests have downloaded public examples and checked that FFmpeg can decode the output. These checks cover particular examples, not every post, region, account, or format on each site.
+
+| Source | Verified download |
+| --- | --- |
+| YouTube | Video with separate audio |
+| TikTok | Video from a protected CDN |
+| Instagram | Public reel |
+| SoundCloud | Audio in its native container |
+| Facebook | Public video |
+| X / Twitter | Public video |
+| Reddit | Video with separate audio, plus silent video |
+
+Other sources supported by Python yt-dlp may also work. Private posts, login requirements, expired URLs, and site changes can affect downloads. If a source breaks, [open an issue](https://github.com/Valhalla-Development/yt-dlp/issues/new) and we will investigate and fix it. Include a public example URL, the fork revision, yt-dlp binary version, OS, and error output. Remove cookies, tokens, and signed CDN URLs from logs.
+
+## Multi-platform usage
+
+Use the download builder for the platform handling described above. Relative output paths are resolved inside the downloader's output directory. Choose the selected audio format's extension for audio-only sources; a filename suffix does not convert the media.
+
+```rust,no_run
+use yt_dlp::{Downloader, VideoSelection};
+use yt_dlp::client::deps::Libraries;
+use yt_dlp::model::selector::{AudioCodecPreference, AudioQuality, VideoCodecPreference, VideoQuality};
+
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    let libraries = Libraries::new("libs/yt-dlp".into(), "libs/ffmpeg".into());
+    let downloader = Downloader::builder(libraries, "downloads")
+        .with_args(vec!["--no-playlist".into()])
+        .build().await?;
+    let media = downloader.fetch_video_infos("https://soundcloud.com/ethmusic/lostin-powers-she-so-heavy").await?;
+    let output = if media.select_video_format(VideoQuality::Best, VideoCodecPreference::Any).is_some() {
+        "media.mp4".to_string()
+    } else {
+        let audio = media.select_audio_format(AudioQuality::Best, AudioCodecPreference::Any)
+            .ok_or("No downloadable media format")?;
+        format!("media.{}", audio.download_info.ext.as_str())
+    };
+    let path = downloader.download(&media, output).execute().await?;
+    println!("Saved to {}", path.display());
+    Ok(())
+}
+```
+
+## Tests
+
+Offline regression tests use reduced extractor metadata with placeholder stream URLs and cookies. Mock download tests cover headers, output paths, CLI routing, and segmented merging.
+
+```bash
+cargo test --locked --test unit --test integration --test e2e
+```
+
+Live tests contact the seven sources above and also cover silent Reddit video. They are ignored by default because posts and site access can change. Install yt-dlp and FFmpeg on PATH, or set their binary paths:
+
+```bash
+YTDLP_TEST_BINARY=/absolute/path/to/yt-dlp \
+FFMPEG_TEST_BINARY=/absolute/path/to/ffmpeg \
+cargo test --locked --test live -- --ignored --test-threads=1
+```
+
+Replace an expired example with `YTDLP_TEST_YOUTUBE_URL`, `YTDLP_TEST_TIKTOK_URL`, `YTDLP_TEST_INSTAGRAM_URL`, `YTDLP_TEST_SOUNDCLOUD_URL`, `YTDLP_TEST_FACEBOOK_URL`, `YTDLP_TEST_X_URL`, `YTDLP_TEST_REDDIT_URL`, or `YTDLP_TEST_REDDIT_SILENT_URL`. The default examples are public and use no login credentials.
+
+The remaining sections document the library's upstream features and APIs.
 
 ## 💭️ Why use an external Python app?
 
@@ -85,11 +98,10 @@ Using an external program is not ideal, but it is the most reliable and maintain
 Add the following to your `Cargo.toml` file:
 ```toml
 [dependencies]
-yt-dlp = "2.8.3"
+yt-dlp = { git = "https://github.com/Valhalla-Development/yt-dlp.git", branch = "develop" }
 ```
 
-A new release is automatically published every two weeks, to keep up to date with dependencies and features.
-Make sure to check the [releases](https://github.com/boul2gom/yt-dlp/releases) page to see the latest version of the crate.
+This fork currently uses the `develop` Git branch. Commit `Cargo.lock` to pin the revision your application uses. Fork releases are separate from upstream releases; upstream version numbers do not identify a fork release.
 
 ## 🔌 Optional features
 
@@ -132,37 +144,37 @@ tiered L1 + L2 setup.
 **Default (in-memory Moka)** — no persistence, TTL-based eviction, useful for short-lived processes:
 ```toml
 [dependencies]
-yt-dlp = { version = "2.8.3", features = ["cache-memory"] }
+yt-dlp = { git = "https://github.com/Valhalla-Development/yt-dlp.git", branch = "develop", features = ["cache-memory"] }
 ```
 
 **JSON** — persistent, file-system backed, no extra dependencies:
 ```toml
 [dependencies]
-yt-dlp = { version = "2.8.3", features = ["cache-json"] }
+yt-dlp = { git = "https://github.com/Valhalla-Development/yt-dlp.git", branch = "develop", features = ["cache-json"] }
 ```
 
 **Redb** — embedded, single-file, ACID-compliant, great for desktop/server apps:
 ```toml
 [dependencies]
-yt-dlp = { version = "2.8.3", features = ["cache-redb"] }
+yt-dlp = { git = "https://github.com/Valhalla-Development/yt-dlp.git", branch = "develop", features = ["cache-redb"] }
 ```
 
 **Redis** — distributed, ideal for multi-node or cloud deployments:
 ```toml
 [dependencies]
-yt-dlp = { version = "2.8.3", features = ["cache-redis"] }
+yt-dlp = { git = "https://github.com/Valhalla-Development/yt-dlp.git", branch = "develop", features = ["cache-redis"] }
 ```
 
 **Tiered (Moka L1 + persistent L2)** — best of both worlds:
 ```toml
 [dependencies]
-yt-dlp = { version = "2.8.3", features = ["cache-memory", "cache-redb"] }
+yt-dlp = { git = "https://github.com/Valhalla-Development/yt-dlp.git", branch = "develop", features = ["cache-memory", "cache-redb"] }
 ```
 
 **Multiple backends compiled in** — select one at runtime via `CacheConfig::persistent_backend`:
 ```toml
 [dependencies]
-yt-dlp = { version = "2.8.3", features = ["cache-memory", "cache-json", "cache-redb"] }
+yt-dlp = { git = "https://github.com/Valhalla-Development/yt-dlp.git", branch = "develop", features = ["cache-memory", "cache-json", "cache-redb"] }
 ```
 ```rust,ignore
 use yt_dlp::prelude::*;
@@ -1617,7 +1629,7 @@ Register async functions to be called when events occur:
 
 ```toml
 [dependencies]
-yt-dlp = { version = "2.8.3", features = ["hooks"] }
+yt-dlp = { git = "https://github.com/Valhalla-Development/yt-dlp.git", branch = "develop", features = ["hooks"] }
 ```
 
 - 🎣 Registering a hook for download events:
@@ -1715,7 +1727,7 @@ Send events to external HTTP endpoints with automatic retry:
 
 ```toml
 [dependencies]
-yt-dlp = { version = "2.8.3", features = ["webhooks"] }
+yt-dlp = { git = "https://github.com/Valhalla-Development/yt-dlp.git", branch = "develop", features = ["webhooks"] }
 ```
 
 - 📡 Registering a webhook:
@@ -1876,7 +1888,7 @@ Enable real-time, aggregate metrics with zero manual bookkeeping:
 
 ```toml
 [dependencies]
-yt-dlp = { version = "2.8.3", features = ["statistics"] }
+yt-dlp = { git = "https://github.com/Valhalla-Development/yt-dlp.git", branch = "develop", features = ["statistics"] }
 ```
 
 The [`StatisticsTracker`](https://docs.rs/yt-dlp/latest/yt_dlp/stats/struct.StatisticsTracker.html) subscribes to the internal event bus in a background task and continuously updates running counters. Call `snapshot()` at any time to obtain an atomic view of all metrics:
@@ -2177,7 +2189,7 @@ Enable the feature in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-yt-dlp = { version = "2.8.3", features = ["live-recording"] }
+yt-dlp = { git = "https://github.com/Valhalla-Development/yt-dlp.git", branch = "develop", features = ["live-recording"] }
 ```
 
 #### 📥 Basic live recording (reqwest engine)
@@ -2251,7 +2263,7 @@ Enable the feature in your `Cargo.toml`:
 
 ```toml
 [dependencies]
-yt-dlp = { version = "2.8.3", features = ["live-streaming"] }
+yt-dlp = { git = "https://github.com/Valhalla-Development/yt-dlp.git", branch = "develop", features = ["live-streaming"] }
 ```
 
 ```rust,ignore
