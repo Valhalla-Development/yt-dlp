@@ -41,8 +41,8 @@ pub struct Video {
     /// The upload date of the video.
     #[serde(rename = "timestamp")]
     pub upload_date: Option<i64>,
-    /// The duration of the video in seconds.
-    pub duration: Option<i64>,
+    /// The duration in seconds, including fractional seconds from audio extractors.
+    pub duration: Option<f64>,
     /// The duration of the video as a human-readable string, e.g. '41:21'.
     pub duration_string: Option<String>,
     /// The canonical webpage URL of the video.

@@ -19,6 +19,27 @@ fn video_deserialize_from_fixture() {
 }
 
 #[test]
+fn video_duration_accepts_fractional_and_integer_seconds() {
+    let mut json: serde_json::Value = serde_json::from_str(&fixtures::load_json_string("video.json")).unwrap();
+
+    for duration in [
+        serde_json::json!(143.206),
+        serde_json::json!(143),
+        serde_json::Value::Null,
+    ] {
+        json["duration"] = duration.clone();
+        let video: Video = serde_json::from_value(json.clone()).expect("Duration should deserialize");
+        assert_eq!(video.duration, duration.as_f64());
+        let serialized = serde_json::to_value(&video).unwrap();
+        assert_eq!(serialized["duration"].as_f64(), duration.as_f64());
+    }
+
+    json.as_object_mut().unwrap().remove("duration");
+    let video: Video = serde_json::from_value(json).expect("Missing duration should deserialize");
+    assert!(video.duration.is_none());
+}
+
+#[test]
 fn video_has_correct_format_count() {
     let video = fixtures::load_video_fixture();
     assert_eq!(video.formats.len(), 10);
@@ -147,7 +168,7 @@ fn reel_fixture_deserializes() {
     assert_eq!(video.id, "DVWFcoHjsnI");
     assert_eq!(video.channel.as_deref(), Some("dustinmotors"));
     assert_eq!(video.formats.len(), 7);
-    assert_eq!(video.duration, Some(12));
+    assert_eq!(video.duration, Some(12.0));
 }
 
 // ============================== Short video fixture ==============================
@@ -157,7 +178,7 @@ fn short_video_fixture_is_short() {
     let video = fixtures::load_short_video_fixture();
     assert_eq!(video.id, "wBe97k57KxY");
     assert_eq!(video.media_type.as_deref(), Some("short"));
-    assert_eq!(video.duration, Some(77));
+    assert_eq!(video.duration, Some(77.0));
     assert_eq!(video.channel.as_deref(), Some("Underscore_"));
 }
 
