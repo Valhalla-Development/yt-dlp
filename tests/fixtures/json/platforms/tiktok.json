@@ -1,0 +1,29 @@
+{
+  "_version": {
+    "version": "2026.06.09",
+    "repository": "yt-dlp/yt-dlp"
+  },
+  "id": "7593022588272561430",
+  "title": "TikTok clip",
+  "extractor": "TikTok",
+  "extractor_key": "TikTok",
+  "duration": 15.25,
+  "webpage_url": "https://www.tiktok.com/@rickastleyofficial/video/7593022588272561430",
+  "formats": [
+    {
+      "format_id": "download",
+      "format": "download",
+      "url": "https://example.com/media/download.mp4",
+      "ext": "mp4",
+      "protocol": "https",
+      "http_headers": {
+        "User-Agent": "platform-regression-test",
+        "Referer": "https://www.tiktok.com/"
+      },
+      "vcodec": "h264",
+      "acodec": "aac",
+      "height": 720,
+      "cookies": "fixture_session=placeholder"
+    }
+  ]
+}

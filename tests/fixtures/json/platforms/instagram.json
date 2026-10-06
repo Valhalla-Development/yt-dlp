@@ -1,0 +1,43 @@
+{
+  "_version": {
+    "version": "2026.06.09",
+    "repository": "yt-dlp/yt-dlp"
+  },
+  "id": "DVWFcoHjsnI",
+  "title": "Instagram reel",
+  "extractor": "Instagram",
+  "extractor_key": "Instagram",
+  "duration": 12,
+  "webpage_url": "https://www.instagram.com/reel/DVWFcoHjsnI/",
+  "thumbnails": [
+    {
+      "id": "0",
+      "url": "https://example.com/thumbnail.jpg"
+    }
+  ],
+  "formats": [
+    {
+      "format_id": "3",
+      "format": "3",
+      "url": "https://example.com/media/3.mp4",
+      "ext": "mp4",
+      "protocol": "https",
+      "http_headers": {
+        "User-Agent": "platform-regression-test"
+      }
+    },
+    {
+      "format_id": "dash-vp9",
+      "format": "dash-vp9",
+      "url": "https://example.com/media/dash-vp9.mp4",
+      "ext": "mp4",
+      "protocol": "https",
+      "http_headers": {
+        "User-Agent": "platform-regression-test"
+      },
+      "vcodec": "vp09.00.40.08",
+      "acodec": "none",
+      "height": 1080
+    }
+  ]
+}

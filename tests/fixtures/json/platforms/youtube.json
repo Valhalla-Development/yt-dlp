@@ -1,0 +1,40 @@
+{
+  "_version": {
+    "version": "2026.06.09",
+    "repository": "yt-dlp/yt-dlp"
+  },
+  "id": "tCDvOQI3pco",
+  "title": "10 Second Timer",
+  "extractor": "youtube",
+  "extractor_key": "Youtube",
+  "duration": 10,
+  "webpage_url": "https://www.youtube.com/watch?v=tCDvOQI3pco",
+  "formats": [
+    {
+      "format_id": "137",
+      "format": "137",
+      "url": "https://example.com/media/137.mp4",
+      "ext": "mp4",
+      "protocol": "https",
+      "http_headers": {
+        "User-Agent": "platform-regression-test"
+      },
+      "vcodec": "avc1.640028",
+      "acodec": "none",
+      "height": 1080
+    },
+    {
+      "format_id": "140",
+      "format": "140",
+      "url": "https://example.com/media/140.mp4",
+      "ext": "m4a",
+      "protocol": "https",
+      "http_headers": {
+        "User-Agent": "platform-regression-test"
+      },
+      "vcodec": "none",
+      "acodec": "mp4a.40.2",
+      "abr": 128
+    }
+  ]
+}

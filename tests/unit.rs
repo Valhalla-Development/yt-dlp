@@ -8,6 +8,9 @@ mod common {
     pub mod test_extractor;
 }
 
+#[path = "unit/platforms.rs"]
+mod platforms;
+
 #[cfg(cache)]
 #[path = "unit/cache/config.rs"]
 mod cache_config;
