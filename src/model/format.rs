@@ -98,21 +98,17 @@ impl Format {
     ///
     /// The [`FormatType`] determined from the codec and manifest information.
     pub fn format_type(&self) -> FormatType {
-        if self.download_info.manifest_url.is_some() {
-            return FormatType::Manifest;
-        }
-
-        if self.storyboard_info.fragments.is_some() {
-            return FormatType::Storyboard;
-        }
-
         let audio = self.codec_info.audio_codec.is_some();
         let video = self.codec_info.video_codec.is_some();
 
         match (audio, video) {
+            // DASH/HLS media streams can reference a manifest and fragments too.
+            // Codec metadata identifies the media; only untyped entries are manifests.
             (true, true) => FormatType::AudioVideo,
             (true, false) => FormatType::Audio,
             (false, true) => FormatType::Video,
+            _ if self.download_info.manifest_url.is_some() => FormatType::Manifest,
+            _ if self.storyboard_info.fragments.is_some() => FormatType::Storyboard,
             // Instagram progressive formats often omit codec labels entirely.
             // Treat unlabeled progressive MP4/MOV URLs as muxed A/V so they stay selectable.
             _ if self.is_unlabeled_progressive_mp4() => FormatType::AudioVideo,

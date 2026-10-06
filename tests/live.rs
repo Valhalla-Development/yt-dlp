@@ -24,35 +24,33 @@ async fn assert_live_download(platform: &str, default_url: &str, audio_only: boo
         .expect("Public media metadata should load");
     assert!(!video.formats.is_empty());
 
-    let path = if audio_only {
+    let output = if audio_only {
         let format = video
             .select_audio_format(AudioQuality::Low, AudioCodecPreference::Any)
             .unwrap();
-        let output = output_dir
+        output_dir
             .path()
-            .join(format!("track.{}", format.download_info.ext.as_str()));
-        downloader
-            .download_format_with_ytdlp(&url, &format.format_id, output)
-            .await
+            .join(format!("track.{}", format.download_info.ext.as_str()))
     } else {
-        downloader
-            .download(&video, output_dir.path().join("video.mp4"))
-            .video_quality(VideoQuality::Low)
-            .video_codec(VideoCodecPreference::AVC1)
-            .audio_quality(AudioQuality::Low)
-            .execute()
-            .await
-    }
-    .expect("Public media should download");
+        output_dir.path().join("video.mp4")
+    };
+    let path = downloader
+        .download(&video, output)
+        .video_quality(VideoQuality::Low)
+        .video_codec(VideoCodecPreference::AVC1)
+        .audio_quality(AudioQuality::Low)
+        .execute()
+        .await
+        .expect("Public media should download");
     assert!(path.starts_with(output_dir.path()));
     assert!(std::fs::metadata(&path).unwrap().len() >= 1024);
 
     // A nonempty file alone could be an HTML error response from the CDN.
     let decoded = tokio::time::timeout(
         Duration::from_secs(30),
-        tokio::process::Command::new(ffmpeg)
+        tokio::process::Command::new(&ffmpeg)
             .args(["-v", "error", "-i"])
-            .arg(path)
+            .arg(&path)
             .args(["-t", "1", "-f", "null", "-"])
             .kill_on_drop(true)
             .output(),
@@ -61,6 +59,20 @@ async fn assert_live_download(platform: &str, default_url: &str, audio_only: boo
     .expect("Media validation should finish")
     .expect("FFmpeg should be available");
     assert!(decoded.status.success(), "Downloaded media should decode");
+
+    if platform == "REDDIT" {
+        let audio = tokio::process::Command::new(&ffmpeg)
+            .args(["-v", "error", "-i"])
+            .arg(&path)
+            .args(["-map", "0:a:0", "-t", "1", "-f", "null", "-"])
+            .output()
+            .await
+            .unwrap();
+        assert!(
+            audio.status.success(),
+            "Reddit's separate audio stream should be preserved"
+        );
+    }
 }
 
 #[tokio::test]
@@ -93,6 +105,45 @@ async fn soundcloud() {
         "SOUNDCLOUD",
         "https://soundcloud.com/ethmusic/lostin-powers-she-so-heavy",
         true,
+    )
+    .await;
+}
+
+#[tokio::test]
+#[ignore = "downloads a public Facebook video; requires yt-dlp and FFmpeg"]
+async fn facebook() {
+    assert_live_download(
+        "FACEBOOK",
+        "https://www.facebook.com/cnn/videos/10155529876156509/",
+        false,
+    )
+    .await;
+}
+
+#[tokio::test]
+#[ignore = "downloads a public X video; requires yt-dlp and FFmpeg"]
+async fn x() {
+    assert_live_download("X", "https://x.com/captainamerica/status/719944021058060289", false).await;
+}
+
+#[tokio::test]
+#[ignore = "downloads a public Reddit video with audio; requires yt-dlp and FFmpeg"]
+async fn reddit() {
+    assert_live_download(
+        "REDDIT",
+        "https://www.reddit.com/r/videos/comments/6rrwyj/that_small_heart_attack/",
+        false,
+    )
+    .await;
+}
+
+#[tokio::test]
+#[ignore = "downloads a silent Reddit video; requires yt-dlp and FFmpeg"]
+async fn reddit_silent() {
+    assert_live_download(
+        "REDDIT_SILENT",
+        "https://www.reddit.com/r/aww/comments/90bu6w/heat_index_was_110_degrees_so_we_offered_him_a/",
+        false,
     )
     .await;
 }

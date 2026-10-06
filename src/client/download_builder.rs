@@ -12,7 +12,7 @@ use crate::download::engine::partial::PartialRange;
 use crate::download::{DownloadPriority, DownloadStatus};
 use crate::error::Result;
 use crate::model::Video;
-use crate::model::format::{Format, FormatType, HttpHeaders};
+use crate::model::format::{Format, FormatType, HttpHeaders, Protocol};
 use crate::model::selector::{
     AudioCodecPreference, AudioQuality, StoryboardQuality, ThumbnailQuality, VideoCodecPreference, VideoQuality,
 };
@@ -281,8 +281,8 @@ impl<'a> DownloadBuilder<'a> {
         // Use configured quality/codec or defaults
         let video_quality = self.video_quality.unwrap_or(VideoQuality::Best);
         let audio_quality = self.audio_quality.unwrap_or(AudioQuality::Best);
-        let video_codec = self.video_codec.unwrap_or(VideoCodecPreference::Any);
-        let audio_codec = self.audio_codec.unwrap_or(AudioCodecPreference::Any);
+        let video_codec = self.video_codec.clone().unwrap_or(VideoCodecPreference::Any);
+        let audio_codec = self.audio_codec.clone().unwrap_or(AudioCodecPreference::Any);
 
         tracing::debug!(
             video_id = %self.video.id,
@@ -297,13 +297,16 @@ impl<'a> DownloadBuilder<'a> {
             "📥 Executing download"
         );
 
-        // Select video format based on quality and codec preferences
-        let video_format = self
-            .video
-            .select_video_format(video_quality, video_codec.clone())
-            .ok_or_else(|| Self::format_not_available(self.video, FormatType::Video))?;
+        // Audio-only sources such as SoundCloud do not have a video stream.
+        let Some(video_format) = self.video.select_video_format(video_quality, video_codec.clone()) else {
+            let audio_format = self
+                .video
+                .select_audio_format(audio_quality, audio_codec.clone())
+                .ok_or_else(|| Self::format_not_available(self.video, FormatType::Audio))?;
+            return self.download_single_format(audio_format).await;
+        };
 
-        // Muxed formats (TikTok, etc.) already contain audio — download as-is.
+        // Muxed formats (TikTok, etc.) already contain audio and need no merge.
         if video_format.format_type().is_audio_and_video() {
             tracing::debug!(
                 video_format_id = %video_format.format_id,
@@ -312,32 +315,20 @@ impl<'a> DownloadBuilder<'a> {
                 "📥 Selected muxed audio+video format"
             );
 
-            // Cookie-gated CDNs (TikTok) often reject plain HTTP clients; let
-            // the yt-dlp binary fetch the stream the same way the CLI does.
-            if video_format.download_info.cookies.is_some() {
-                let page_url = self.video.webpage_url.as_deref().ok_or_else(|| {
-                    crate::error::Error::download_failed(
-                        0,
-                        "Missing webpage_url for yt-dlp format download",
-                    )
-                })?;
-                return self
-                    .downloader
-                    .download_format_with_ytdlp(page_url, &video_format.format_id, &self.output)
-                    .await;
-            }
-
-            return self
-                .downloader
-                .download_format_to_path(video_format, &self.output)
-                .await;
+            return self.download_single_format(video_format).await;
         }
 
         // Select audio format based on quality and codec preferences
-        let audio_format = self
-            .video
-            .select_audio_format(audio_quality, audio_codec.clone())
-            .ok_or_else(|| Self::format_not_available(self.video, FormatType::Audio))?;
+        // Silent Reddit and Instagram videos are valid downloads without audio.
+        let Some(audio_format) = self.video.select_audio_format(audio_quality, audio_codec.clone()) else {
+            return self.download_single_format(video_format).await;
+        };
+
+        // Manifest streams need yt-dlp's fragment handling rather than a raw HTTP fetch.
+        if Self::requires_ytdlp(video_format) || Self::requires_ytdlp(audio_format) {
+            let format_id = format!("{}+{}", video_format.format_id, audio_format.format_id);
+            return self.download_with_ytdlp(&format_id).await;
+        }
 
         tracing::debug!(
             video_format_id = %video_format.format_id,
@@ -485,6 +476,42 @@ impl<'a> DownloadBuilder<'a> {
                 video_download_id,
                 "Unexpected download status",
             )),
+        }
+    }
+
+    fn requires_ytdlp(format: &Format) -> bool {
+        format.download_info.cookies.is_some()
+            || format.download_info.manifest_url.is_some()
+            || format.storyboard_info.fragments.is_some()
+            || format.protocol != Protocol::Https
+    }
+
+    fn resolved_output(&self) -> PathBuf {
+        if self.output.is_absolute() {
+            self.output.clone()
+        } else {
+            self.downloader.output_dir.join(&self.output)
+        }
+    }
+
+    async fn download_with_ytdlp(&self, format_id: &str) -> Result<PathBuf> {
+        let page_url =
+            self.video.webpage_url.as_deref().ok_or_else(|| {
+                crate::error::Error::download_failed(0, "Missing webpage_url for yt-dlp format download")
+            })?;
+        self.downloader
+            .download_format_with_ytdlp(page_url, format_id, self.resolved_output())
+            .await
+    }
+
+    async fn download_single_format(&self, format: &Format) -> Result<PathBuf> {
+        // Cookie-gated and segmented CDNs require the original extractor context.
+        if Self::requires_ytdlp(format) {
+            self.download_with_ytdlp(&format.format_id).await
+        } else {
+            self.downloader
+                .download_format_to_path(format, self.resolved_output())
+                .await
         }
     }
 }

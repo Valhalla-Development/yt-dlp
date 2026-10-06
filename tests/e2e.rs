@@ -10,6 +10,9 @@ mod common {
     pub mod server;
 }
 
+#[path = "e2e/platforms.rs"]
+mod platforms;
+
 #[path = "e2e/helpers.rs"]
 mod helpers;
 

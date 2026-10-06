@@ -72,3 +72,76 @@ fn soundcloud_preserves_fractional_duration_and_selects_audio() {
     assert_eq!(format.format_type(), FormatType::Audio);
     assert_eq!(format.download_info.ext.as_str(), "m4a");
 }
+
+#[test]
+fn facebook_selects_unlabeled_progressive_video() {
+    let video = platform_video("facebook");
+    let format = video
+        .select_video_format(VideoQuality::Low, VideoCodecPreference::AVC1)
+        .unwrap();
+    assert_eq!(format.format_id, "sd");
+    assert_eq!(format.format_type(), FormatType::AudioVideo);
+}
+
+#[test]
+fn x_keeps_muxed_hls_selectable() {
+    let video = platform_video("x");
+    let format = video
+        .select_video_format(VideoQuality::Best, VideoCodecPreference::AVC1)
+        .unwrap();
+    assert_eq!(format.format_id, "hls-2176");
+    assert_eq!(format.format_type(), FormatType::AudioVideo);
+}
+
+#[test]
+fn reddit_selects_dash_video_and_audio_despite_manifest_urls() {
+    let video = platform_video("reddit");
+    assert_eq!(video.upload_date, Some(1501941939));
+    let format = video
+        .select_video_format(VideoQuality::Best, VideoCodecPreference::AVC1)
+        .unwrap();
+    assert_eq!(format.format_id, "dash-VIDEO-1");
+    assert_eq!(format.format_type(), FormatType::Video);
+    let audio = video
+        .select_audio_format(AudioQuality::Best, AudioCodecPreference::Any)
+        .unwrap();
+    assert_eq!(audio.format_id, "dash-AUDIO-1");
+    assert_eq!(audio.format_type(), FormatType::Audio);
+}
+
+#[test]
+fn timestamps_accept_numeric_seconds_without_weakening_validation() {
+    let base = serde_json::to_value(platform_video("reddit")).unwrap();
+    for field in ["timestamp", "release_timestamp"] {
+        for (value, expected) in [
+            (serde_json::json!(1501941939), Some(1501941939)),
+            (serde_json::json!(1501941939.75), Some(1501941939)),
+            (serde_json::json!(null), None),
+            (serde_json::json!(i64::MAX), Some(i64::MAX)),
+        ] {
+            let mut json = base.clone();
+            json[field] = value;
+            let video: Video = serde_json::from_value(json).unwrap();
+            assert_eq!(
+                if field == "timestamp" {
+                    video.upload_date
+                } else {
+                    video.release_timestamp
+                },
+                expected
+            );
+        }
+        for value in [
+            serde_json::json!("1501941939"),
+            serde_json::json!(1e30),
+            serde_json::json!(-1e30),
+        ] {
+            let mut json = base.clone();
+            json[field] = value;
+            assert!(serde_json::from_value::<Video>(json).is_err());
+        }
+        let mut json = base.clone();
+        json.as_object_mut().unwrap().remove(field);
+        assert!(serde_json::from_value::<Video>(json).is_ok());
+    }
+}

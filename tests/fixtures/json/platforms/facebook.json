@@ -1,0 +1,37 @@
+{
+  "_version": {
+    "version": "2026.06.09",
+    "repository": "yt-dlp/yt-dlp"
+  },
+  "id": "10155529876156509",
+  "title": "Facebook clip",
+  "extractor": "facebook",
+  "extractor_key": "Facebook",
+  "duration": 44.181,
+  "webpage_url": "https://www.facebook.com/cnn/videos/10155529876156509/",
+  "formats": [
+    {
+      "format_id": "sd",
+      "format": "sd",
+      "url": "{{MOCK_SERVER}}/media",
+      "ext": "mp4",
+      "protocol": "https",
+      "http_headers": {
+        "User-Agent": "platform-regression-test",
+        "Referer": "https://www.facebook.com/"
+      },
+      "height": 480
+    },
+    {
+      "format_id": "hd",
+      "format": "hd",
+      "url": "{{MOCK_SERVER}}/media",
+      "ext": "mp4",
+      "protocol": "https",
+      "http_headers": {
+        "User-Agent": "platform-regression-test"
+      },
+      "height": 1080
+    }
+  ]
+}

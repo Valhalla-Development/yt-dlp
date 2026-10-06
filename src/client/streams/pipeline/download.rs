@@ -302,7 +302,14 @@ impl Downloader {
             format_id.to_string(),
             "-o".to_string(),
             output_path.to_string_lossy().to_string(),
+            "--ffmpeg-location".to_string(),
+            self.libraries.ffmpeg.to_string_lossy().to_string(),
         ];
+
+        // Keep split DASH/HLS downloads in the container requested by the caller.
+        if format_id.contains('+') && output_path.extension().is_some_and(|ext| ext == "mp4") {
+            args.extend(["--merge-output-format".to_string(), "mp4".to_string()]);
+        }
 
         if let Some(user_agent) = self.user_agent.as_ref() {
             args.push("--user-agent".to_string());
@@ -320,17 +327,13 @@ impl Downloader {
 
         args.push(page_url.to_string());
 
-        let executor =
-            crate::executor::Executor::new(self.libraries.youtube.clone(), args, self.timeout);
+        let executor = crate::executor::Executor::new(self.libraries.youtube.clone(), args, self.timeout);
         executor.execute().await?;
 
         if !output_path.exists() {
             return Err(crate::error::Error::download_failed(
                 0,
-                format!(
-                    "yt-dlp reported success but output missing: {}",
-                    output_path.display()
-                ),
+                format!("yt-dlp reported success but output missing: {}", output_path.display()),
             ));
         }
 

@@ -80,10 +80,9 @@ async fn download_video_with_priority_selects_combined_format() {
     );
 }
 
-/// The reel fixture has no combined audio+video format, so `best_audio_video_format()`
-/// fails with `FormatNotAvailable`; this tests error handling.
+/// Muxed reel formats remain selectable even when they reference a manifest.
 #[tokio::test]
-async fn download_reel_with_priority_no_combined_format() {
+async fn download_reel_with_priority_selects_muxed_manifest_format() {
     let server = helpers::setup_e2e_server().await;
     let tmp = fixtures::temp_test_dir();
     let downloader = helpers::build_e2e_downloader(&server.uri(), tmp.path()).await;
@@ -91,7 +90,11 @@ async fn download_reel_with_priority_no_combined_format() {
 
     let result = downloader.download_video_with_priority(&reel, "output.mp4", None).await;
 
-    assert!(result.is_err(), "Expected error since reel has no combined format");
+    let download_id = result.expect("Muxed reel format should be selectable");
+    assert!(matches!(
+        downloader.wait_for_download(download_id).await,
+        Some(DownloadStatus::Completed)
+    ));
 }
 
 /// Download an audio-only stream by going through the download manager directly.

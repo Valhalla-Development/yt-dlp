@@ -39,7 +39,11 @@ pub struct Video {
     /// If the video is public, unlisted, or private.
     pub availability: Option<String>,
     /// The upload date of the video.
-    #[serde(rename = "timestamp")]
+    #[serde(
+        rename = "timestamp",
+        default,
+        deserialize_with = "crate::model::utils::serde::unix_timestamp"
+    )]
     pub upload_date: Option<i64>,
     /// The duration in seconds, including fractional seconds from audio extractors.
     pub duration: Option<f64>,
@@ -56,6 +60,7 @@ pub struct Video {
     /// Whether the video was originally a live stream.
     pub was_live: Option<bool>,
     /// Unix timestamp of a scheduled premiere or live start time.
+    #[serde(default, deserialize_with = "crate::model::utils::serde::unix_timestamp")]
     pub release_timestamp: Option<i64>,
     /// Release year, if different from the upload year.
     pub release_year: Option<i64>,

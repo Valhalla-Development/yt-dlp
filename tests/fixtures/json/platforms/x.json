@@ -1,0 +1,39 @@
+{
+  "_version": {
+    "version": "2026.06.09",
+    "repository": "yt-dlp/yt-dlp"
+  },
+  "id": "717462543795523584",
+  "title": "X clip",
+  "extractor": "twitter",
+  "extractor_key": "Twitter",
+  "duration": 3.17,
+  "webpage_url": "https://x.com/captainamerica/status/719944021058060289",
+  "formats": [
+    {
+      "format_id": "http-832",
+      "format": "http-832",
+      "url": "{{MOCK_SERVER}}/media",
+      "ext": "mp4",
+      "protocol": "https",
+      "http_headers": {
+        "User-Agent": "platform-regression-test"
+      },
+      "height": 360
+    },
+    {
+      "format_id": "hls-2176",
+      "format": "hls-2176",
+      "url": "{{MOCK_SERVER}}/media",
+      "ext": "mp4",
+      "protocol": "m3u8_native",
+      "http_headers": {
+        "User-Agent": "platform-regression-test"
+      },
+      "height": 720,
+      "vcodec": "avc1.4d0020",
+      "acodec": "mp4a.40.2",
+      "manifest_url": "{{MOCK_SERVER}}/manifest"
+    }
+  ]
+}

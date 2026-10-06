@@ -1,0 +1,56 @@
+{
+  "_version": {
+    "version": "2026.06.09",
+    "repository": "yt-dlp/yt-dlp"
+  },
+  "id": "zv89llsvexdz",
+  "title": "Reddit video",
+  "extractor": "Reddit",
+  "extractor_key": "Reddit",
+  "duration": 12,
+  "timestamp": 1501941939.0,
+  "webpage_url": "https://www.reddit.com/r/videos/comments/6rrwyj/that_small_heart_attack/",
+  "formats": [
+    {
+      "format_id": "dash-VIDEO-1",
+      "format": "dash-VIDEO-1",
+      "url": "{{MOCK_SERVER}}/media",
+      "ext": "mp4",
+      "protocol": "https",
+      "http_headers": {
+        "User-Agent": "platform-regression-test"
+      },
+      "height": 720,
+      "vcodec": "avc1.4d401f",
+      "acodec": "none",
+      "manifest_url": "{{MOCK_SERVER}}/manifest"
+    },
+    {
+      "format_id": "dash-AUDIO-1",
+      "format": "dash-AUDIO-1",
+      "url": "{{MOCK_SERVER}}/media",
+      "ext": "m4a",
+      "protocol": "https",
+      "http_headers": {
+        "User-Agent": "platform-regression-test"
+      },
+      "vcodec": "none",
+      "acodec": "mp4a.40.2",
+      "abr": 128,
+      "manifest_url": "{{MOCK_SERVER}}/manifest"
+    },
+    {
+      "format_id": "fallback",
+      "format": "fallback",
+      "url": "{{MOCK_SERVER}}/media",
+      "ext": "mp4",
+      "protocol": "https",
+      "http_headers": {
+        "User-Agent": "platform-regression-test"
+      },
+      "height": 240,
+      "vcodec": "h264",
+      "acodec": "none"
+    }
+  ]
+}
