@@ -36,6 +36,11 @@ async fn facebook_progressive_download_respects_relative_output_and_referer() {
         .unwrap();
     assert_eq!(output, tmp.path().join("nested/facebook.mp4"));
     assert_eq!(std::fs::read(output).unwrap(), bytes);
+    let mut video = video;
+    video.formats.retain(|format| format.format_id == "sd");
+    let output = downloader.download_video(&video, "facebook-simple.mp4").await.unwrap();
+    assert_eq!(output, tmp.path().join("facebook-simple.mp4"));
+    assert_eq!(std::fs::read(output).unwrap(), bytes);
 }
 
 #[tokio::test]
@@ -54,6 +59,8 @@ async fn silent_reddit_video_downloads_without_an_audio_stream() {
     let output = downloader.download(&video, "silent.mp4").execute().await.unwrap();
     assert_eq!(output, tmp.path().join("silent.mp4"));
     assert_eq!(std::fs::read(output).unwrap(), bytes);
+    let output = downloader.download_video(&video, "silent-simple.mp4").await.unwrap();
+    assert_eq!(std::fs::read(output).unwrap(), bytes);
 }
 
 #[tokio::test]
@@ -71,6 +78,8 @@ async fn soundcloud_audio_only_builder_preserves_native_container() {
     video.formats[0].download_info.url = Some(format!("{}/media", server.uri()));
     let output = downloader.download(&video, "track.m4a").execute().await.unwrap();
     assert_eq!(output, tmp.path().join("track.m4a"));
+    assert_eq!(std::fs::read(output).unwrap(), bytes);
+    let output = downloader.download_video(&video, "track-simple.m4a").await.unwrap();
     assert_eq!(std::fs::read(output).unwrap(), bytes);
 }
 
@@ -138,4 +147,8 @@ async fn reddit_dash_streams_merge_using_configured_ffmpeg_and_mp4() {
     assert!(args.contains("-f\ndash-VIDEO-1+dash-AUDIO-1\n"));
     assert!(args.contains(&format!("--ffmpeg-location\n{}\n", tmp.path().join("ffmpeg").display())));
     assert!(args.contains("--merge-output-format\nmp4\n"));
+    let output = downloader.download_video(&video, "reddit-simple.mp4").await.unwrap();
+    assert_eq!(output, tmp.path().join("reddit-simple.mp4"));
+    let args = std::fs::read_to_string(tmp.path().join("args.txt")).unwrap();
+    assert!(args.contains("-f\ndash-VIDEO-1+dash-AUDIO-1\n"));
 }

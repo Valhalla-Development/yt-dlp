@@ -78,21 +78,29 @@ impl Downloader {
             }
         }
 
-        let best_video = video.best_video_format().ok_or_else(|| Error::FormatNotAvailable {
-            video_id: video.id.clone(),
-            format_type: FormatType::Video,
-            available_formats: video.formats.iter().map(|f| f.format_id.clone()).collect(),
-        })?;
-
-        let best_audio = video.best_audio_format().ok_or_else(|| Error::FormatNotAvailable {
-            video_id: video.id.clone(),
-            format_type: FormatType::Audio,
-            available_formats: video.formats.iter().map(|f| f.format_id.clone()).collect(),
-        })?;
-
-        // Download and combine video and audio, embedding metadata in a single ffmpeg pass
-        self.download_and_combine_with_meta(video, best_video, best_audio, &path)
-            .await?;
+        let best_video = video.best_video_format();
+        let best_audio = video.best_audio_format();
+        match (best_video, best_audio) {
+            // Preserve metadata embedding for ordinary separate HTTP streams.
+            (Some(video_format), Some(audio_format))
+                if video_format.format_type() == FormatType::Video
+                    && !crate::client::download_builder::DownloadBuilder::requires_ytdlp(video_format)
+                    && !crate::client::download_builder::DownloadBuilder::requires_ytdlp(audio_format) =>
+            {
+                self.download_and_combine_with_meta(video, video_format, audio_format, &path)
+                    .await?;
+            }
+            _ => {
+                // The builder handles muxed, segmented, silent, and audio-only media.
+                // This API's explicit relative path remains relative to the working directory.
+                let target = if path.is_absolute() {
+                    path.clone()
+                } else {
+                    std::env::current_dir()?.join(&path)
+                };
+                self.download(video, target).execute().await?;
+            }
+        }
 
         // Cache the downloaded file if caching is enabled
         #[cfg(cache)]

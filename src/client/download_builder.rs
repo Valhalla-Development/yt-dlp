@@ -479,7 +479,7 @@ impl<'a> DownloadBuilder<'a> {
         }
     }
 
-    fn requires_ytdlp(format: &Format) -> bool {
+    pub(super) fn requires_ytdlp(format: &Format) -> bool {
         format.download_info.cookies.is_some()
             || format.download_info.manifest_url.is_some()
             || format.storyboard_info.fragments.is_some()
